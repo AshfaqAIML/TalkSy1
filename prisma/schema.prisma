@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions          Session[]
+  lessonProgress    LessonProgress[]
+  exerciseAttempts  ExerciseAttempt[]
+  notes             LessonNote[]
+  assessmentResults AssessmentResult[]
+  stats             UserStats?
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Learner progress per lesson. Created on first open, but NEVER auto-completed:
+// completion is derived server-side from explicit section completions (+ passed assessment).
+model LessonProgress {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonSlug        String
+  status            String    @default("in-progress") // "in-progress" | "completed"
+  sectionsCompleted String    @default("[]") // JSON array of section ids
+  lastSectionId     String?
+  bookmarked        Boolean   @default(false)
+  completedAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([userId, lessonSlug])
+  @@index([userId])
+}
+
+// Every graded submission is recorded: answer, correctness, hints used, time spent.
+model ExerciseAttempt {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exerciseId String
+  lessonSlug String
+  type       String
+  difficulty String
+  skill      String   @default("vocabulary")
+  context    String   @default("practice") // "practice" | "assessment"
+  isCorrect  Boolean
+  score      Float    @default(0)
+  hintsUsed  Int      @default(0)
+  durationMs Int      @default(0)
+  answer     String   @default("") // JSON-encoded submitted answer
+  createdAt  DateTime @default(now())
+
+  @@index([userId, exerciseId])
+  @@index([userId, lessonSlug])
+}
+
+// Free-form learner notes, one per lesson section.
+model LessonNote {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonSlug String
+  sectionId  String
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, lessonSlug, sectionId])
+}
+
+// End-of-lesson assessment runs. Created "pending" on start (with the
+// deterministically selected question set), finalized on submit.
+model AssessmentResult {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonSlug  String
+  status      String    @default("pending") // "pending" | "completed"
+  questionIds String    @default("[]") // JSON array of exercise ids
+  score       Float     @default(0)
+  passed      Boolean   @default(false)
+  total       Int       @default(0)
+  correct     Int       @default(0)
+  detail      String    @default("[]") // JSON per-question results
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([userId, lessonSlug])
+}
+
+// Aggregated performance counters, updated transactionally with attempts.
+model UserStats {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalAttempts   Int      @default(0)
+  correctAttempts Int      @default(0)
+  hintsUsed       Int      @default(0)
+  timeSpentMs     Int      @default(0)
+  byType          String   @default("{}") // JSON { exerciseType: { attempts, correct } }
+  byDifficulty    String   @default("{}") // JSON { difficulty: { attempts, correct } }
+  bySkill         String   @default("{}") // JSON { skill: { attempts, correct } }
+  streakDays      Int      @default(0)
+  lastActiveDay   String?
+  updatedAt       DateTime @updatedAt
+}
