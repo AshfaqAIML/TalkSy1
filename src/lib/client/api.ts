@@ -6,6 +6,22 @@ import type {
   SafeExercise,
   SentenceStructure,
 } from "@/data/curriculum/types";
+import type {
+  AnnotatedWord,
+  ChallengeRunDto,
+  ChallengeStartDto,
+  ChallengeSubmitDto,
+  FlashcardSessionDto,
+  ReviewOutcomeDto,
+  SentenceDto,
+  SentenceSubmitDto,
+  VocabOverviewDto,
+  VocabSettingsDto,
+  WordDetailDto,
+  WordListDto,
+} from "@/lib/vocab/dto";
+import type { SrsConfigOverrides } from "@/lib/vocab/srs";
+import type { ChallengeKind } from "@/data/vocabulary/types";
 
 /** Typed client for the TalkSy API. All calls are same-origin, relative. */
 
@@ -242,6 +258,52 @@ export interface ClinicHistoryResult {
   }[];
 }
 
+export interface VocabCategoriesDto {
+  categories: {
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+    total: number;
+    contextCount: number;
+    subcategories: { id: string; name: string; total: number }[];
+  }[];
+}
+
+export interface DailyWordDto {
+  dateKey: string;
+  word: AnnotatedWord["word"];
+  bookmarked: boolean;
+  progress: AnnotatedWord["progress"];
+}
+
+export interface DailyWordsDto {
+  today: DailyWordDto;
+  archive: DailyWordDto[];
+}
+
+export interface WordSearchParams {
+  q?: string;
+  category?: string;
+  sub?: string;
+  difficulty?: string;
+  status?: string;
+  flag?: string;
+  bookmarked?: string;
+  ids?: string[];
+  sort?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface WordsResultDto {
+  words: AnnotatedWord[];
+  total: number;
+  libraryTotal: number;
+  limit: number;
+  offset: number;
+}
+
 export const api = {
   me: () => request<{ user: SessionUser | null }>("/api/auth/me"),
   register: (body: { email: string; name: string; password: string }) =>
@@ -308,4 +370,112 @@ export const api = {
 
   progress: () => request<{ items: ProgressItem[] }>("/api/progress"),
   stats: () => request<StatsDto>("/api/stats"),
+
+  // -------------------------------------------------------------------------
+  // Vocabulary system
+  // -------------------------------------------------------------------------
+
+  vocabCategories: () => request<VocabCategoriesDto>("/api/vocabulary/categories"),
+  vocabDaily: () => request<DailyWordsDto>("/api/vocabulary/daily"),
+  vocabWord: (id: string) => request<WordDetailDto>(`/api/vocabulary/words/${id}`),
+  vocabWords: (params: WordSearchParams = {}) => {
+    const search = new URLSearchParams();
+    if (params.q) search.set("q", params.q);
+    if (params.category) search.set("category", params.category);
+    if (params.sub) search.set("sub", params.sub);
+    if (params.difficulty) search.set("difficulty", params.difficulty);
+    if (params.status) search.set("status", params.status);
+    if (params.flag) search.set("flag", params.flag);
+    if (params.bookmarked) search.set("bookmarked", params.bookmarked);
+    if (params.ids && params.ids.length > 0) search.set("ids", params.ids.join(","));
+    if (params.sort) search.set("sort", params.sort);
+    if (params.limit) search.set("limit", String(params.limit));
+    if (params.offset) search.set("offset", String(params.offset));
+    const qs = search.toString();
+    return request<WordsResultDto>(`/api/vocabulary/words${qs ? `?${qs}` : ""}`);
+  },
+
+  vocabOverview: () => request<VocabOverviewDto>("/api/vocabulary/overview"),
+  vocabFlashcards: (study = "queue") =>
+    request<FlashcardSessionDto>(`/api/vocabulary/flashcards?study=${encodeURIComponent(study)}`),
+  vocabReview: (body: {
+    action: "grade" | "known" | "snooze" | "flag";
+    wordId: string;
+    rating?: "again" | "hard" | "good" | "easy";
+    source?: "flashcard" | "challenge" | "sentence" | "daily" | "explore";
+    hours?: number;
+    difficult?: boolean;
+  }) =>
+    request<ReviewOutcomeDto>("/api/vocabulary/review", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  vocabBookmarks: () => request<{ words: AnnotatedWord[] }>("/api/vocabulary/bookmarks"),
+  vocabToggleBookmark: (wordId: string) =>
+    request<{ wordId: string; bookmarked: boolean }>("/api/vocabulary/bookmarks", {
+      method: "POST",
+      body: JSON.stringify({ wordId }),
+    }),
+
+  vocabLists: () => request<{ lists: WordListDto[] }>("/api/vocabulary/lists"),
+  vocabCreateList: (body: { name: string; description?: string }) =>
+    request<{ list: WordListDto }>("/api/vocabulary/lists", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  vocabList: (id: string) =>
+    request<{ list: WordListDto; words: AnnotatedWord[] }>(`/api/vocabulary/lists/${id}`),
+  vocabUpdateList: (id: string, body: { name?: string; description?: string }) =>
+    request<{ list: { id: string; name: string; description: string } }>(
+      `/api/vocabulary/lists/${id}`,
+      { method: "PATCH", body: JSON.stringify(body) },
+    ),
+  vocabAddToList: (id: string, wordId: string) =>
+    request<{ wordId: string; added: boolean }>(`/api/vocabulary/lists/${id}`, {
+      method: "POST",
+      body: JSON.stringify({ wordId }),
+    }),
+  vocabRemoveFromList: (id: string, wordId: string) =>
+    request<{ wordId: string; removed: boolean }>(
+      `/api/vocabulary/lists/${id}?wordId=${encodeURIComponent(wordId)}`,
+      { method: "DELETE" },
+    ),
+  vocabDeleteList: (id: string) =>
+    request<{ deleted: boolean }>(`/api/vocabulary/lists/${id}`, { method: "DELETE" }),
+
+  vocabSentences: (wordId?: string) =>
+    request<{ sentences: SentenceDto[] }>(
+      `/api/vocabulary/sentences${wordId ? `?wordId=${encodeURIComponent(wordId)}` : ""}`,
+    ),
+  vocabSubmitSentence: (wordId: string, sentence: string) =>
+    request<SentenceSubmitDto>("/api/vocabulary/sentences", {
+      method: "POST",
+      body: JSON.stringify({ wordId, sentence }),
+    }),
+
+  vocabChallengeHistory: () => request<{ runs: ChallengeRunDto[] }>("/api/vocabulary/challenges"),
+  vocabStartChallenge: (body: { kind: ChallengeKind; categoryId?: string; size?: number }) =>
+    request<ChallengeStartDto>("/api/vocabulary/challenges", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  vocabSubmitChallenge: (
+    runId: string,
+    answers: Record<string, unknown>,
+    durationMs: number,
+  ) =>
+    request<ChallengeSubmitDto>(`/api/vocabulary/challenges/${runId}/submit`, {
+      method: "POST",
+      body: JSON.stringify({ answers, durationMs }),
+    }),
+
+  vocabSettings: () => request<VocabSettingsDto>("/api/vocabulary/settings"),
+  vocabUpdateSettings: (overrides: SrsConfigOverrides) =>
+    request<VocabSettingsDto>("/api/vocabulary/settings", {
+      method: "PUT",
+      body: JSON.stringify({ overrides }),
+    }),
+  vocabResetSettings: () =>
+    request<VocabSettingsDto>("/api/vocabulary/settings", { method: "DELETE" }),
 };

@@ -12,7 +12,8 @@ export type AppRoute =
   | { name: "login" }
   | { name: "register" }
   | { name: "dashboard" }
-  | { name: "lesson"; slug: string };
+  | { name: "lesson"; slug: string }
+  | { name: "vocabulary"; tab?: string; param?: string };
 
 /**
  * ADR-003: the whole learner app lives on the single public `/` route and
@@ -32,6 +33,12 @@ export function parseHash(hash: string): AppRoute {
       return { name: "grammar" };
     case "lab":
       return { name: "lab" };
+    case "vocabulary":
+      return {
+        name: "vocabulary",
+        tab: parts[1] && VOCAB_TABS.includes(parts[1]) ? parts[1] : undefined,
+        param: parts[2] || undefined,
+      };
     case "login":
       return { name: "login" };
     case "register":
@@ -61,6 +68,8 @@ export function routeToHash(route: AppRoute): string {
       return "#/grammar/clinic";
     case "lab":
       return "#/lab";
+    case "vocabulary":
+      return `#/vocabulary${route.tab ? `/${route.tab}` : ""}${route.param ? `/${route.param}` : ""}`;
     case "login":
       return "#/login";
     case "register":
@@ -73,6 +82,18 @@ export function routeToHash(route: AppRoute): string {
 }
 
 const HOME_ROUTE: AppRoute = { name: "home" };
+
+/** Valid #/vocabulary/<tab> segments (the hub view validates the rest). */
+const VOCAB_TABS = [
+  "today",
+  "explore",
+  "flashcards",
+  "context",
+  "relationships",
+  "sentences",
+  "challenges",
+  "lists",
+];
 
 function subscribe(callback: () => void): () => void {
   window.addEventListener("hashchange", callback);

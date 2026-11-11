@@ -84,7 +84,7 @@ export function HomeView({ navigate }: { navigate: (route: AppRoute) => void }) 
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Free while we grow · no credit card · 20 lessons live today: Pre-A1, A1 and the Grammar Core track
+            Free while we grow · no credit card · 20 lessons, Grammar School and a 135-word vocabulary world live today
           </p>
         </div>
       </section>
@@ -115,8 +115,59 @@ export function HomeView({ navigate }: { navigate: (route: AppRoute) => void }) 
         </div>
       </section>
 
-      {/* Grammar School & Lab */}
+      {/* Word World */}
       <section className="border-t bg-secondary/30">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
+          <div className="grid items-center gap-8 md:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                New · Vocabulary system
+              </p>
+              <h2 className="mt-1 text-2xl font-bold sm:text-3xl">
+                Word World — learn words that stick
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                A complete vocabulary system: explore 135 words with
+                pronunciation and audio, meet them in short dialogues, write
+                your own sentences, play six challenge games — and remember
+                everything with smart spaced repetition that never forgets a
+                word you still need.
+              </p>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <Button className="gap-2" onClick={() => navigate({ name: "vocabulary" })}>
+                  Explore Word World <ArrowRight className="size-4" aria-hidden />
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate({ name: "vocabulary", tab: "explore" })}
+                >
+                  Browse all 135 words
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { value: "135", label: "words with audio, IPA & Spanish support" },
+                { value: "12", label: "categories from Home to Social English" },
+                { value: "6", label: "challenge types, generated fresh every run" },
+                { value: "0", label: "words forgotten — spaced repetition schedules them all" },
+              ].map((stat) => (
+                <Card key={stat.label} className="bg-card">
+                  <CardContent className="p-4">
+                    <p className="text-3xl font-bold text-primary">{stat.value}</p>
+                    <p className="mt-1 text-xs leading-snug text-muted-foreground">
+                      {stat.label}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Grammar School & Lab */}
+      <section className="border-t bg-background">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
           <h2 className="text-center text-2xl font-bold sm:text-3xl">
             Grammar School &amp; Sentence Lab

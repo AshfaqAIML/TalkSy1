@@ -21,6 +21,13 @@ model User {
   notes             LessonNote[]
   assessmentResults AssessmentResult[]
   clinicSubmissions GrammarClinicSubmission[]
+  vocabProgress     VocabProgress[]
+  vocabReviewLogs   VocabReviewLog[]
+  vocabBookmarks    VocabBookmark[]
+  wordLists         WordList[]
+  vocabSentences    VocabSentence[]
+  vocabChallengeRuns VocabChallengeRun[]
+  vocabSettings     VocabSettings?
   stats             UserStats?
 }
 
@@ -140,4 +147,141 @@ model UserStats {
   streakDays      Int      @default(0)
   lastActiveDay   String?
   updatedAt       DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Vocabulary system
+// ---------------------------------------------------------------------------
+
+// Spaced-repetition state per learner per word. Created on the first graded
+// review — NEVER just by opening a word. "Mastered" is a soft status: it still
+// schedules future reviews (intervals are capped) and any "again" demotes the
+// word back to learning.
+model VocabProgress {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wordId         String
+  status         String    @default("learning") // learning | reviewing | mastered
+  repetitions    Int       @default(0) // consecutive successful reviews
+  streak         Int       @default(0)
+  lapses         Int       @default(0) // times the learner forgot the word
+  ease           Float     @default(2.5) // SM-2 style ease factor
+  intervalMinutes Int      @default(0) // current scheduled interval
+  dueAt          DateTime?
+  lastReviewedAt DateTime?
+  firstSeenAt    DateTime  @default(now())
+  totalReviews   Int       @default(0)
+  correctReviews Int       @default(0)
+  isDifficult    Boolean   @default(false) // learner's own difficulty flag
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([userId, wordId])
+  @@index([userId, dueAt])
+  @@index([userId, status])
+}
+
+// Every review event: what the learner did, from where, and what happened.
+// Powers the daily new-word budget, recent-performance factor and history.
+model VocabReviewLog {
+  id                   String   @id @default(cuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wordId               String
+  source               String   // flashcard | challenge | sentence | daily | explore
+  action               String   // grade | known | snooze | flag | unflag
+  rating               String?  // again | hard | good | easy (null for non-grade actions)
+  correct              Boolean?
+  wasNew               Boolean  @default(false)
+  intervalBeforeMin    Int      @default(0)
+  intervalAfterMin     Int      @default(0)
+  createdAt            DateTime @default(now())
+
+  @@index([userId, wordId])
+  @@index([userId, createdAt])
+}
+
+// Bookmarked words ("save for later"), independent of word lists.
+model VocabBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wordId    String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, wordId])
+  @@index([userId])
+}
+
+// Personal word lists created by the learner ("My travel words", …).
+model WordList {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String         @default("")
+  items       WordListItem[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([userId])
+}
+
+model WordListItem {
+  id        String   @id @default(cuid())
+  listId    String
+  list      WordList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  wordId    String
+  note      String   @default("")
+  createdAt DateTime @default(now())
+
+  @@unique([listId, wordId])
+}
+
+// Sentence practice: learner-written sentences with checker feedback.
+model VocabSentence {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wordId    String
+  sentence  String
+  valid     Boolean
+  feedback  String   @default("[]") // JSON SentenceIssue[]
+  createdAt DateTime @default(now())
+
+  @@index([userId, wordId])
+  @@index([userId, createdAt])
+}
+
+// Vocabulary challenge runs. Created "pending" with the generation seed;
+// finalized on submit. Items are regenerated deterministically from the seed
+// for server-side grading.
+model VocabChallengeRun {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind        String    // category-quiz | meaning | spelling | arrangement | contextual-usage | matching
+  seed        Int
+  category    String?
+  total       Int       @default(0)
+  correct     Int       @default(0)
+  score       Float     @default(0)
+  durationMs  Int       @default(0)
+  status      String    @default("pending") // pending | completed
+  detail      String    @default("[]") // JSON per-item results (completed runs)
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([userId, createdAt])
+}
+
+// Per-learner spaced-repetition configuration (JSON SrsConfigOverrides on top
+// of the engine defaults — see src/lib/vocab/srs.ts).
+model VocabSettings {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  config    String   @default("{}") // JSON SrsConfigOverrides
+  updatedAt DateTime @updatedAt
 }

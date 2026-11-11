@@ -26,6 +26,7 @@ import { TenseExplorerView } from "@/components/app/grammar/TenseExplorerView";
 import { ErrorClinicView } from "@/components/app/grammar/ErrorClinicView";
 import { SentenceLabView } from "@/components/app/lab/SentenceLabView";
 import { LessonPlayer } from "@/components/app/lesson/LessonPlayer";
+import { VocabularyView } from "@/components/app/vocabulary/VocabularyView";
 import { cn } from "@/lib/utils";
 
 function TalkSyLogo() {
@@ -76,6 +77,15 @@ export default function Page() {
         )}
       >
         Learning path
+      </Link>
+      <Link
+        href="#/vocabulary"
+        className={cn(
+          "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-secondary",
+          route.name === "vocabulary" && "bg-secondary",
+        )}
+      >
+        Word World
       </Link>
       <Link
         href="#/grammar"
@@ -193,6 +203,9 @@ export default function Page() {
         {route.name === "grammar-tenses" ? <TenseExplorerView /> : null}
         {route.name === "grammar-clinic" ? <ErrorClinicView navigate={navigate} /> : null}
         {route.name === "lab" ? <SentenceLabView /> : null}
+        {route.name === "vocabulary" ? (
+          <VocabularyView route={route} navigate={navigate} />
+        ) : null}
         {route.name === "login" ? <AuthView mode="login" navigate={navigate} /> : null}
         {route.name === "register" ? <AuthView mode="register" navigate={navigate} /> : null}
         {route.name === "dashboard" ? (
@@ -223,7 +236,7 @@ export default function Page() {
             <span className="font-semibold text-foreground">TalkSy</span> — From your
             first English word to confident communication.
           </p>
-          <p>Pre-A1 &amp; A1 lessons live · A2 in progress</p>
+          <p>Pre-A1 &amp; A1 lessons live · Word World with 135 words · A2 in progress</p>
         </div>
       </footer>
     </div>
