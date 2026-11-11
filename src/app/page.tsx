@@ -27,6 +27,10 @@ import { ErrorClinicView } from "@/components/app/grammar/ErrorClinicView";
 import { SentenceLabView } from "@/components/app/lab/SentenceLabView";
 import { LessonPlayer } from "@/components/app/lesson/LessonPlayer";
 import { VocabularyView } from "@/components/app/vocabulary/VocabularyView";
+import { ReadingRoomView } from "@/components/app/reading/ReadingRoomView";
+import { ReaderView } from "@/components/app/reading/ReaderView";
+import { ListeningLabView } from "@/components/app/listening/ListeningLabView";
+import { ActivityView } from "@/components/app/listening/ActivityView";
 import { cn } from "@/lib/utils";
 
 function TalkSyLogo() {
@@ -104,6 +108,24 @@ export default function Page() {
         )}
       >
         Sentence Lab
+      </Link>
+      <Link
+        href="#/reading"
+        className={cn(
+          "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-secondary",
+          route.name === "reading" && "bg-secondary",
+        )}
+      >
+        Reading Room
+      </Link>
+      <Link
+        href="#/listening"
+        className={cn(
+          "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-secondary",
+          route.name === "listening" && "bg-secondary",
+        )}
+      >
+        Listening Lab
       </Link>
       {user ? (
         <Link
@@ -206,6 +228,20 @@ export default function Page() {
         {route.name === "vocabulary" ? (
           <VocabularyView route={route} navigate={navigate} />
         ) : null}
+        {route.name === "reading" ? (
+          route.slug ? (
+            <ReaderView key={route.slug} slug={route.slug} navigate={navigate} />
+          ) : (
+            <ReadingRoomView navigate={navigate} />
+          )
+        ) : null}
+        {route.name === "listening" ? (
+          route.slug ? (
+            <ActivityView key={route.slug} slug={route.slug} navigate={navigate} />
+          ) : (
+            <ListeningLabView navigate={navigate} />
+          )
+        ) : null}
         {route.name === "login" ? <AuthView mode="login" navigate={navigate} /> : null}
         {route.name === "register" ? <AuthView mode="register" navigate={navigate} /> : null}
         {route.name === "dashboard" ? (
@@ -236,7 +272,7 @@ export default function Page() {
             <span className="font-semibold text-foreground">TalkSy</span> — From your
             first English word to confident communication.
           </p>
-          <p>Pre-A1 &amp; A1 lessons live · Word World with 135 words · A2 in progress</p>
+          <p>Pre-A1 &amp; A1 lessons · 21 graded reading texts · 18 listening activities · A2 in progress</p>
         </div>
       </footer>
     </div>

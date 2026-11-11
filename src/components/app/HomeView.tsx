@@ -223,6 +223,55 @@ export function HomeView({ navigate }: { navigate: (route: AppRoute) => void }) 
         </div>
       </section>
 
+      {/* Reading Room & Listening Lab */}
+      <section className="border-t bg-secondary/30">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
+          <h2 className="text-center text-2xl font-bold sm:text-3xl">
+            Reading Room &amp; Listening Lab
+          </h2>
+          <p className="mx-auto mt-2 max-w-xl text-center text-sm text-muted-foreground">
+            Two dedicated skill environments: graded texts you can tune to your
+            eyes, and graded audio you control like a media player.
+          </p>
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => navigate({ name: "reading" })}
+              className="group rounded-2xl border bg-card p-5 text-left transition-all hover:border-primary/50 hover:shadow-md"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                21 texts · 4 levels
+              </p>
+              <h3 className="mt-1 flex items-center gap-2 font-semibold">
+                <BookOpen className="size-4 text-primary" aria-hidden /> Reading Room
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                From first words to editorial-style passages. Adjustable text
+                size and spacing, dictionary lookup, pronunciation, bookmarks
+                and comprehension checks across seven reading skills.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate({ name: "listening" })}
+              className="group rounded-2xl border bg-card p-5 text-left transition-all hover:border-primary/50 hover:shadow-md"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                18 activities · 9 stages
+              </p>
+              <h3 className="mt-1 flex items-center gap-2 font-semibold">
+                <Headphones className="size-4 text-primary" aria-hidden /> Listening Lab
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                From letter sounds to professional meetings. Play, pause, slow
+                down and replay any part — with transcripts that unlock only
+                after you prove your ears.
+              </p>
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Levels */}
       <section className="border-t bg-background">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">

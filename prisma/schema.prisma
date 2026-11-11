@@ -28,6 +28,12 @@ model User {
   vocabSentences    VocabSentence[]
   vocabChallengeRuns VocabChallengeRun[]
   vocabSettings     VocabSettings?
+  readingProgress   ReadingProgress[]
+  readingBookmarks  ReadingBookmark[]
+  readingAttempts   ReadingAttempt[]
+  readingRuns       ReadingRun[]
+  listeningProgress ListeningProgress[]
+  listeningAttempts ListeningAttempt[]
   stats             UserStats?
 }
 
@@ -284,4 +290,127 @@ model VocabSettings {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   config    String   @default("{}") // JSON SrsConfigOverrides
   updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Reading Room
+// ---------------------------------------------------------------------------
+
+// Learner progress per reading text. Created on first interaction, but NEVER
+// auto-completed: completion is derived server-side from paragraphs read +
+// a passed comprehension run.
+model ReadingProgress {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  textId          String
+  status          String    @default("in-progress") // "in-progress" | "completed"
+  paragraphsRead  String    @default("[]") // JSON array of paragraph ids
+  lastParagraphId String?
+  bookmarked      Boolean   @default(false)
+  bestRunScore    Float     @default(0)
+  runsCompleted   Int       @default(0)
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([userId, textId])
+  @@index([userId])
+}
+
+// Paragraph-level bookmarks inside a reading text (paragraphId "" = whole text).
+model ReadingBookmark {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  textId      String
+  paragraphId String
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, textId, paragraphId])
+  @@index([userId])
+}
+
+// Every graded comprehension-question submission (practice or assessment).
+model ReadingAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  textId    String
+  questionId String
+  skill     String // comprehension skill
+  format    String // choice | sequence | short-text
+  context   String  @default("practice") // "practice" | "assessment"
+  isCorrect Boolean
+  score     Float    @default(0)
+  answer    String   @default("") // JSON-encoded submitted answer
+  createdAt DateTime @default(now())
+
+  @@index([userId, textId])
+  @@index([userId, questionId])
+}
+
+// Comprehension-check runs. Created "pending" with the question set,
+// finalised on submit with the per-skill breakdown.
+model ReadingRun {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  textId      String
+  status      String    @default("pending") // "pending" | "completed"
+  questionIds String    @default("[]") // JSON array of question ids
+  score       Float     @default(0)
+  passed      Boolean   @default(false)
+  correct     Int       @default(0)
+  total       Int       @default(0)
+  bySkill     String    @default("{}") // JSON { skill: { attempts, correct } }
+  detail      String    @default("[]") // JSON per-question results
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([userId, textId])
+}
+
+// ---------------------------------------------------------------------------
+// Listening Lab
+// ---------------------------------------------------------------------------
+
+// Learner progress per listening activity. An exercise is "completed" when it
+// has been answered correctly at least once; the activity completes when all
+// exercises are completed — never just by opening it. First-try results are
+// tracked separately to compute the activity score.
+model ListeningProgress {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityId       String
+  status           String    @default("in-progress") // "in-progress" | "completed"
+  exercisesCompleted String  @default("[]") // JSON array of exercise ids (correct ≥ once)
+  firstTryCorrect  String    @default("[]") // JSON array of exercise ids correct on first try
+  bestScore        Float     @default(0)
+  runsCompleted    Int       @default(0)
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([userId, activityId])
+  @@index([userId])
+}
+
+// Every graded listening-exercise submission.
+model ListeningAttempt {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activityId String
+  exerciseId String
+  format     String // listen-select | listen-complete | …
+  isCorrect  Boolean
+  score      Float    @default(0)
+  hintsUsed  Int      @default(0)
+  answer     String   @default("") // JSON-encoded submitted answer
+  createdAt  DateTime @default(now())
+
+  @@index([userId, activityId])
+  @@index([userId, exerciseId])
 }

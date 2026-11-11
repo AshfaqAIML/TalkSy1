@@ -13,7 +13,9 @@ export type AppRoute =
   | { name: "register" }
   | { name: "dashboard" }
   | { name: "lesson"; slug: string }
-  | { name: "vocabulary"; tab?: string; param?: string };
+  | { name: "vocabulary"; tab?: string; param?: string }
+  | { name: "reading"; slug?: string }
+  | { name: "listening"; slug?: string };
 
 /**
  * ADR-003: the whole learner app lives on the single public `/` route and
@@ -39,6 +41,10 @@ export function parseHash(hash: string): AppRoute {
         tab: parts[1] && VOCAB_TABS.includes(parts[1]) ? parts[1] : undefined,
         param: parts[2] || undefined,
       };
+    case "reading":
+      return { name: "reading", slug: parts[1] || undefined };
+    case "listening":
+      return { name: "listening", slug: parts[1] || undefined };
     case "login":
       return { name: "login" };
     case "register":
@@ -70,6 +76,10 @@ export function routeToHash(route: AppRoute): string {
       return "#/lab";
     case "vocabulary":
       return `#/vocabulary${route.tab ? `/${route.tab}` : ""}${route.param ? `/${route.param}` : ""}`;
+    case "reading":
+      return `#/reading${route.slug ? `/${route.slug}` : ""}`;
+    case "listening":
+      return `#/listening${route.slug ? `/${route.slug}` : ""}`;
     case "login":
       return "#/login";
     case "register":

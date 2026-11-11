@@ -42,7 +42,7 @@ check "home hero subcopy" "$HOME_SNAP" "Learn English step by step, practise eve
 check "home primary CTA" "$HOME_SNAP" "Start Learning Free"
 check "home secondary CTA" "$HOME_SNAP" "Explore Learning Path"
 check "home tagline" "$HOME_SNAP" "From your first English word to confident communication."
-check "footer" "$HOME_SNAP" "Pre-A1 & A1 lessons live"
+check "footer" "$HOME_SNAP" "21 graded reading texts"
 
 echo "=============== 2. LIBRARY (public) ==============="
 $AB open "$BASE/#/library" >/dev/null 2>&1

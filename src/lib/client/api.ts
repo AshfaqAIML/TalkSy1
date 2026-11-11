@@ -23,6 +23,18 @@ import type {
 import type { SrsConfigOverrides } from "@/lib/vocab/srs";
 import type { ChallengeKind } from "@/data/vocabulary/types";
 
+import type {
+  SafeReadingQuestion,
+  ReadingFeedback,
+  ReadingParagraph,
+  GlossaryEntry,
+  ComprehensionSkill,
+} from "@/data/reading/types";
+import type {
+  SafeListeningExercise,
+  ListeningFeedback,
+} from "@/data/listening/types";
+
 /** Typed client for the TalkSy API. All calls are same-origin, relative. */
 
 export interface SessionUser {
@@ -478,4 +490,257 @@ export const api = {
     }),
   vocabResetSettings: () =>
     request<VocabSettingsDto>("/api/vocabulary/settings", { method: "DELETE" }),
+
+  // -------------------------------------------------------------------------
+  // Reading Room
+  // -------------------------------------------------------------------------
+
+  readingLibrary: () => request<ReadingLibraryDto>("/api/reading/library"),
+  readingText: (slug: string) =>
+    request<ReadingTextBundle>(`/api/reading/texts/${encodeURIComponent(slug)}`),
+  readingState: (
+    slug: string,
+    body:
+      | { action: "paragraph-read"; paragraphId: string }
+      | { action: "position"; paragraphId: string }
+      | { action: "bookmark"; bookmarked: boolean }
+      | { action: "paragraph-bookmark"; paragraphId: string },
+  ) =>
+    request<{ progress: ReadingProgressDto; paragraphBookmarks: string[] }>(
+      "/api/reading/state",
+      { method: "POST", body: JSON.stringify({ slug, ...body }) },
+    ),
+  readingCheck: (body: {
+    slug: string;
+    questionId: string;
+    answer: unknown;
+    durationMs?: number;
+  }) =>
+    request<ReadingCheckResult>("/api/reading/check", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  readingStartRun: (slug: string) =>
+    request<ReadingRunStartDto>("/api/reading/runs", {
+      method: "POST",
+      body: JSON.stringify({ slug }),
+    }),
+  readingSubmitRun: (
+    runId: string,
+    answers: Record<string, unknown>,
+  ) =>
+    request<ReadingRunResult>(`/api/reading/runs/${runId}/submit`, {
+      method: "POST",
+      body: JSON.stringify({ answers }),
+    }),
+
+  // -------------------------------------------------------------------------
+  // Listening Lab
+  // -------------------------------------------------------------------------
+
+  listeningLibrary: () => request<ListeningLibraryDto>("/api/listening/library"),
+  listeningActivity: (slug: string) =>
+    request<ListeningActivityBundle>(
+      `/api/listening/activities/${encodeURIComponent(slug)}`,
+    ),
+  listeningCheck: (body: {
+    slug: string;
+    exerciseId: string;
+    answer: unknown;
+    hintsUsed?: number;
+    durationMs?: number;
+  }) =>
+    request<ListeningCheckResult>("/api/listening/check", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };
+
+// ---------------------------------------------------------------------------
+// Reading Room & Listening Lab DTOs
+// ---------------------------------------------------------------------------
+
+export interface ReadingProgressDto {
+  textId: string;
+  status: "in-progress" | "completed";
+  paragraphsRead: string[];
+  readCount: number;
+  totalParagraphs: number;
+  lastParagraphId: string | null;
+  bookmarked: boolean;
+  bestRunScore: number;
+  runsCompleted: number;
+  completedAt: string | null;
+}
+
+export interface ReadingLibraryText {
+  id: string;
+  slug: string;
+  level: string;
+  category: string;
+  title: string;
+  description: string;
+  estimatedMinutes: number;
+  tags: string[];
+  illustration: string | null;
+  paragraphCount: number;
+  questionCount: number;
+  progress: {
+    status: "in-progress" | "completed";
+    readCount: number;
+    totalParagraphs: number;
+    bookmarked: boolean;
+    bestRunScore: number;
+    bestRunPassed: boolean;
+    completedAt: string | null;
+  } | null;
+}
+
+export interface ReadingLibraryDto {
+  levels: { id: string; name: string; tagline: string; cefr: string; description: string }[];
+  categories: { id: string; name: string; levels: string[] }[];
+  texts: ReadingLibraryText[];
+  skillStats: { skill: string; attempts: number; correct: number }[];
+}
+
+export interface ReadingTextBundle {
+  text: {
+    id: string;
+    slug: string;
+    level: string;
+    category: string;
+    title: string;
+    description: string;
+    estimatedMinutes: number;
+    tags: string[];
+    illustration: string | null;
+    paragraphs: ReadingParagraph[];
+    glossary: GlossaryEntry[];
+    passScore: number;
+    questions: SafeReadingQuestion[];
+  };
+  progress: ReadingProgressDto;
+  paragraphBookmarks: string[];
+  bestRun: { score: number; passed: boolean; correct: number; total: number; completedAt: string | null } | null;
+}
+
+export interface ReadingCheckResult {
+  questionId: string;
+  correct: boolean;
+  score: number;
+  invalid: boolean;
+  feedback: ReadingFeedback;
+}
+
+export interface ReadingRunStartDto {
+  runId: string;
+  textId: string;
+  passScore: number;
+  total: number;
+  questions: SafeReadingQuestion[];
+}
+
+export interface ReadingRunResult {
+  runId: string;
+  textId: string;
+  summary: {
+    scorePercent: number;
+    passed: boolean;
+    correct: number;
+    total: number;
+    passMarkPercent: number;
+    pointsScored: number;
+    pointsTotal: number;
+    bySkill: { skill: string; attempts: number; correct: number }[];
+    wrongSkills: string[];
+    recommendation: string;
+  };
+  review: {
+    questionId: string;
+    skill: ComprehensionSkill;
+    format: string;
+    difficulty: string;
+    correct: boolean;
+    invalid: boolean;
+    score: number;
+    prompt: string;
+    submitted: unknown;
+    submittedDescription: string;
+    feedback: ReadingFeedback;
+  }[];
+  progress: ReadingProgressDto;
+}
+
+export interface ListeningProgressDto {
+  activityId: string;
+  status: "in-progress" | "completed";
+  exercisesCompleted: string[];
+  completedCount: number;
+  totalExercises: number;
+  firstTryCorrect: string[];
+  scorePercent: number;
+  bestScore: number;
+  runsCompleted: number;
+  transcriptUnlocked: boolean;
+  completedAt: string | null;
+}
+
+export interface ListeningLibraryActivity {
+  id: string;
+  slug: string;
+  stage: string;
+  title: string;
+  description: string;
+  estimatedMinutes: number;
+  tags: string[];
+  segmentCount: number;
+  exerciseCount: number;
+  formats: string[];
+  transcriptPolicy: "open" | "locked";
+  speakerCount: number;
+  progress: {
+    status: "in-progress" | "completed";
+    completedCount: number;
+    totalExercises: number;
+    scorePercent: number;
+    transcriptUnlocked: boolean;
+    completedAt: string | null;
+  } | null;
+}
+
+export interface ListeningLibraryDto {
+  stages: { id: string; name: string; tagline: string; cefr: string }[];
+  activities: ListeningLibraryActivity[];
+}
+
+export interface ListeningActivityBundle {
+  activity: {
+    id: string;
+    slug: string;
+    stage: string;
+    title: string;
+    description: string;
+    estimatedMinutes: number;
+    tags: string[];
+    speakers: { id: string; name: string; role?: string }[] | null;
+    segments: {
+      id: string;
+      speakerId: string | null;
+      text: string;
+      translation: string | null;
+    }[];
+    transcriptPolicy: "open" | "locked";
+    audio: { rate?: number; gapMs?: number };
+    exercises: SafeListeningExercise[];
+  };
+  progress: ListeningProgressDto;
+}
+
+export interface ListeningCheckResult {
+  exerciseId: string;
+  correct: boolean;
+  score: number;
+  invalid: boolean;
+  feedback: ListeningFeedback;
+  progress: ListeningProgressDto;
+}

@@ -119,4 +119,16 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Interactive elements clear the sticky page header when scrolled into
+     view (programmatic scrollIntoView, browser find, a11y navigation). */
+  button,
+  a,
+  input,
+  textarea,
+  select,
+  [role="button"],
+  [role="radio"],
+  [role="tab"] {
+    scroll-margin-top: 5rem;
+  }
 }
