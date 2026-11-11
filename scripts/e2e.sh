@@ -55,7 +55,7 @@ check "library shows A1 level" "$LIB_SNAP" "A1 · Building Blocks"
 check "library lesson 1" "$LIB_SNAP" "Hello! Everyday Greetings"
 check "library a1 to-be lesson" "$LIB_SNAP" 'The Verb \"To Be\"'
 START_COUNT=$(echo "$LIB_SNAP" | grep -cF 'button "Start lesson"')
-check "library has 6 start buttons" "$START_COUNT" "6"
+check "library has 20 start buttons" "$START_COUNT" "20"
 
 echo "=============== 3. REGISTER ==============="
 TS=$(date +%s)

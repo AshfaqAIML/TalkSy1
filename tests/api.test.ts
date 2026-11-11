@@ -108,10 +108,15 @@ describe("curriculum API", () => {
       levels: { id: string; units: { lessons: unknown[] }[] }[];
       totals: { lessons: number; blockTypes: number; exerciseTypes: number };
     };
-    expect(data.levels.map((l) => l.id)).toEqual(["pre-a1", "a1", "a2"]);
-    expect(data.totals.lessons).toBe(6);
-    expect(data.totals.blockTypes).toBe(16);
-    expect(data.totals.exerciseTypes).toBe(15);
+    expect(data.levels.map((l) => l.id)).toEqual([
+      "pre-a1",
+      "a1",
+      "grammar-core",
+      "a2",
+    ]);
+    expect(data.totals.lessons).toBe(20);
+    expect(data.totals.blockTypes).toBe(20);
+    expect(data.totals.exerciseTypes).toBe(16);
   });
 
   it("404s for unknown lessons", async () => {

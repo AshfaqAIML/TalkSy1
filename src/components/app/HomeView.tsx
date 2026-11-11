@@ -22,12 +22,12 @@ export function HomeView({ navigate }: { navigate: (route: AppRoute) => void }) 
     {
       icon: BookOpen,
       title: "Structured lessons",
-      text: "16 block types — vocabulary, dialogues, grammar rules, tables, diagrams and more — rendered by one reusable engine.",
+      text: "20 block types — vocabulary, dialogues, grammar rules, tense comparisons, sentence diagrams and challenges — rendered by one reusable engine.",
     },
     {
       icon: Brain,
-      title: "15 exercise types",
-      text: "From multiple choice to dictation, drag-and-drop and speaking — every answer graded with full feedback.",
+      title: "16 exercise types",
+      text: "From multiple choice to dictation, drag-and-drop, sentence building and speaking — every answer graded with full feedback.",
     },
     {
       icon: Headphones,
@@ -84,7 +84,7 @@ export function HomeView({ navigate }: { navigate: (route: AppRoute) => void }) 
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Free while we grow · no credit card · 6 beginner lessons live today
+            Free while we grow · no credit card · 20 lessons live today: Pre-A1, A1 and the Grammar Core track
           </p>
         </div>
       </section>
@@ -115,8 +115,65 @@ export function HomeView({ navigate }: { navigate: (route: AppRoute) => void }) 
         </div>
       </section>
 
-      {/* Levels */}
+      {/* Grammar School & Lab */}
       <section className="border-t bg-secondary/30">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
+          <h2 className="text-center text-2xl font-bold sm:text-3xl">
+            Grammar School &amp; Sentence Lab
+          </h2>
+          <p className="mx-auto mt-2 max-w-xl text-center text-sm text-muted-foreground">
+            Two connected systems: understand the rules, then build sentences
+            with your own hands.
+          </p>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <button
+              type="button"
+              onClick={() => navigate({ name: "grammar" })}
+              className="group rounded-2xl border bg-card p-5 text-left transition-all hover:border-primary/50 hover:shadow-md"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                8 modules · 12 tenses
+              </p>
+              <h3 className="mt-1 font-semibold">Grammar School</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Every part of speech, tense comparisons and colour-coded
+                sentence diagrams.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate({ name: "grammar-clinic" })}
+              className="group rounded-2xl border bg-card p-5 text-left transition-all hover:border-primary/50 hover:shadow-md"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                Instant corrections
+              </p>
+              <h3 className="mt-1 font-semibold">Grammar Error Clinic</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Submit your own sentences, get corrections and track your
+                recurring error patterns.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate({ name: "lab" })}
+              className="group rounded-2xl border bg-card p-5 text-left transition-all hover:border-primary/50 hover:shadow-md"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                7 stages · challenges
+              </p>
+              <h3 className="mt-1 font-semibold">Sentence Lab</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Build sentences from word tiles — from “I read.” to passive
+                transformations.
+              </p>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Levels */}
+      <section className="border-t bg-background">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
           <h2 className="text-center text-2xl font-bold sm:text-3xl">
             Your learning path

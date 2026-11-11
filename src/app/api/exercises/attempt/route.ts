@@ -38,7 +38,10 @@ export async function POST(req: Request) {
 
   const hintsUsed = Math.max(0, Math.min(10, Number(body.hintsUsed) || 0));
   const durationMs = Math.max(0, Math.min(3_600_000, Number(body.durationMs) || 0));
-  const context = body.context === "assessment" ? "assessment" : "practice";
+  const context =
+    body.context === "assessment" || body.context === "challenge"
+      ? body.context
+      : "practice";
 
   const result = validateAnswer(exercise, body.answer);
   const points = result.correct ? DIFFICULTY_POINTS[exercise.difficulty] : 0;
@@ -76,6 +79,11 @@ export async function POST(req: Request) {
     invalid: result.invalid,
     points,
     totalPoints: DIFFICULTY_POINTS[exercise.difficulty],
+    // Sentence-build exercises ship the structure annotation of the canonical
+    // answer AFTER grading so the learner can inspect it (never before).
+    ...(exercise.type === "sentence-build" && exercise.structure
+      ? { structure: exercise.structure }
+      : {}),
     feedback: result.invalid
       ? {
           correctAnswer: exercise.feedback.correctAnswer,

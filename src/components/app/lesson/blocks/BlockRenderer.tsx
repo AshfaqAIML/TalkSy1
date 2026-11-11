@@ -26,6 +26,12 @@ import {
   DialogueBlockView,
   VideoBlockView,
 } from "./media-blocks";
+import {
+  ChallengeBlockView,
+  PosModuleBlockView,
+  SentenceAnatomyBlockView,
+  TenseComparisonBlockView,
+} from "./grammar-blocks";
 import { ExerciseRunner } from "../exercises/ExerciseRunner";
 
 /**
@@ -142,6 +148,20 @@ export function BlockRenderer({
       );
     case "homework":
       return <HomeworkBlockView block={block} />;
+    case "pos-module":
+      return <PosModuleBlockView block={block} />;
+    case "tense-comparison":
+      return <TenseComparisonBlockView block={block} />;
+    case "sentence-anatomy":
+      return <SentenceAnatomyBlockView block={block} />;
+    case "challenge":
+      return (
+        <ChallengeBlockView
+          block={block}
+          lessonSlug={lessonSlug}
+          exercisesById={exercisesById}
+        />
+      );
     default:
       return null;
   }

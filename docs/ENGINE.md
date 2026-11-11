@@ -7,21 +7,21 @@ server-side validator.
 
 ```
 src/data/curriculum/          ← content as code (lessons, blocks, exercises)
-  types.ts                    ← the content model (16 block types, 15 exercise types)
+  types.ts                    ← the content model (20 block types, 16 exercise types)
   pre-a1.ts / a1.ts           ← beginner lesson library (6 lessons)
   pre-a1-exercises.ts / a1-exercises.ts
   index.ts                    ← registry + integrity validation + coverage helpers
 
 src/lib/engine/               ← isomorphic engine core
   normalize.ts                ← text normalization, typo tolerance, seeded PRNG
-  validators.ts               ← authoritative grading for all 15 exercise types
+  validators.ts               ← authoritative grading for all 16 exercise types
   sanitize.ts                 ← strips grading data before anything reaches the client
   assessment.ts               ← question selection, grading, performance summaries
   progress.ts                 ← completion rules (no auto-mastery)
 
 src/components/app/lesson/    ← the renderer
-  blocks/BlockRenderer.tsx    ← one dispatcher for all 16 block types
-  exercises/ExerciseRunner.tsx ← one runner for all 15 exercise types
+  blocks/BlockRenderer.tsx    ← one dispatcher for all 20 block types
+  exercises/ExerciseRunner.tsx ← one runner for all 16 exercise types
 ```
 
 ## Lesson content renderer
@@ -60,7 +60,7 @@ links into the assessment.
 
 ## Exercise engine
 
-15 reusable types, each a typed variant of `Exercise`:
+16 reusable types, each a typed variant of `Exercise`:
 
 `mcq` · `multi-select` · `fill-blank` · `match` · `drag-drop` · `rearrange` ·
 `complete-sentence` · `correct-mistake` · `translate` · `short-answer` ·
@@ -114,7 +114,7 @@ feedback, and a recommendation.
 
 - `bun run test` — 50 tests: normalization, all 15 validators (using real
   library exercises), assessment selection/grading/summaries, progress
-  no-auto-mastery rules, curriculum integrity (all 16 block types and all 15
+  no-auto-mastery rules, curriculum integrity (all 20 block types and all 16
   exercise types present, all references valid), auth hashing, and a full API
   golden path (register → open lesson → attempts → sections → assessment →
   completion → stats) against an isolated test database.

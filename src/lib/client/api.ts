@@ -4,6 +4,7 @@ import type {
   ExerciseFeedback,
   Lesson,
   SafeExercise,
+  SentenceStructure,
 } from "@/data/curriculum/types";
 
 /** Typed client for the TalkSy API. All calls are same-origin, relative. */
@@ -90,6 +91,8 @@ export interface AttemptResult {
   invalid: boolean;
   points: number;
   totalPoints: number;
+  /** Sentence-build only: structure of the canonical answer, sent after grading. */
+  structure?: SentenceStructure;
   feedback: ExerciseFeedback;
 }
 
@@ -204,6 +207,41 @@ async function request<T>(
   }
 }
 
+export interface ClinicIssue {
+  ruleId: string;
+  category: string;
+  original: string;
+  suggestion: string;
+  explanation: string;
+  lessonSlug?: string;
+}
+
+export interface ClinicCheckResult {
+  original: string;
+  corrected: string;
+  clean: boolean;
+  issues: ClinicIssue[];
+  categories: string[];
+}
+
+export interface ClinicHistoryResult {
+  submissions: {
+    id: string;
+    sentence: string;
+    corrected: string;
+    issues: ClinicIssue[];
+    categories: string[];
+    createdAt: string;
+  }[];
+  recurring: { category: string; count: number }[];
+  recommendedLessons: {
+    slug: string;
+    title: string;
+    description: string;
+    estimatedMinutes: number;
+  }[];
+}
+
 export const api = {
   me: () => request<{ user: SessionUser | null }>("/api/auth/me"),
   register: (body: { email: string; name: string; password: string }) =>
@@ -227,12 +265,19 @@ export const api = {
     answer: unknown;
     hintsUsed: number;
     durationMs: number;
-    context?: "practice" | "assessment";
+    context?: "practice" | "assessment" | "challenge";
   }) =>
     request<AttemptResult>("/api/exercises/attempt", {
       method: "POST",
       body: JSON.stringify(body),
     }),
+
+  clinicCheck: (body: { sentence: string }) =>
+    request<ClinicCheckResult>("/api/grammar/clinic", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  clinicHistory: () => request<ClinicHistoryResult>("/api/grammar/clinic"),
 
   lessonState: (
     slug: string,

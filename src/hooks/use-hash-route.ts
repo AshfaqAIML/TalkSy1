@@ -5,6 +5,10 @@ import { useCallback, useSyncExternalStore } from "react";
 export type AppRoute =
   | { name: "home" }
   | { name: "library" }
+  | { name: "grammar" }
+  | { name: "grammar-tenses" }
+  | { name: "grammar-clinic" }
+  | { name: "lab" }
   | { name: "login" }
   | { name: "register" }
   | { name: "dashboard" }
@@ -22,6 +26,12 @@ export function parseHash(hash: string): AppRoute {
   switch (parts[0]) {
     case "library":
       return { name: "library" };
+    case "grammar":
+      if (parts[1] === "tenses") return { name: "grammar-tenses" };
+      if (parts[1] === "clinic") return { name: "grammar-clinic" };
+      return { name: "grammar" };
+    case "lab":
+      return { name: "lab" };
     case "login":
       return { name: "login" };
     case "register":
@@ -43,6 +53,14 @@ export function routeToHash(route: AppRoute): string {
       return "#/";
     case "library":
       return "#/library";
+    case "grammar":
+      return "#/grammar";
+    case "grammar-tenses":
+      return "#/grammar/tenses";
+    case "grammar-clinic":
+      return "#/grammar/clinic";
+    case "lab":
+      return "#/lab";
     case "login":
       return "#/login";
     case "register":

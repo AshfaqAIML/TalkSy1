@@ -84,6 +84,22 @@ export function sanitizeExercise(exercise: Exercise): SafeExercise {
       safe.situation = base.situation;
       safe.targetPhrases = base.targetPhrases;
       break;
+    case "sentence-build": {
+      // Tiles (correct tokens + distractors), deterministically scrambled.
+      let tiles = seededShuffle(exercise.tiles, `build:${exercise.id}`);
+      // If the shuffle accidentally equals an accepted order, rotate once.
+      const normalize = (s: string) =>
+        s.split(/\s+/).map((t) => t.trim().toLowerCase()).filter(Boolean).join(" ");
+      if (
+        exercise.acceptedSentences.some(
+          (accepted) => normalize(tiles.join(" ")) === normalize(accepted),
+        )
+      ) {
+        tiles = [...tiles.slice(1), tiles[0]];
+      }
+      safe.tiles = tiles;
+      break;
+    }
   }
 
   return safe as unknown as SafeExercise;

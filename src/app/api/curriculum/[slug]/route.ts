@@ -102,7 +102,9 @@ export async function GET(
 
   const allExerciseIds = new Set([
     ...lesson.sections.flatMap((s) =>
-      s.blocks.flatMap((b) => (b.type === "practice" ? b.exerciseIds : [])),
+      s.blocks.flatMap((b) =>
+        b.type === "practice" || b.type === "challenge" ? b.exerciseIds : [],
+      ),
     ),
     ...(lesson.assessment?.bank ?? []),
   ]);

@@ -32,6 +32,10 @@ const ALL_BLOCK_TYPES: BlockType[] = [
   "warning",
   "practice",
   "homework",
+  "pos-module",
+  "tense-comparison",
+  "sentence-anatomy",
+  "challenge",
 ];
 
 const ALL_EXERCISE_TYPES: ExerciseType[] = [
@@ -41,6 +45,7 @@ const ALL_EXERCISE_TYPES: ExerciseType[] = [
   "match",
   "drag-drop",
   "rearrange",
+  "sentence-build",
   "complete-sentence",
   "correct-mistake",
   "translate",
@@ -58,24 +63,25 @@ describe("curriculum integrity", () => {
     expect(issues).toEqual([]);
   });
 
-  it("covers all 16 lesson block types in the beginner library", () => {
+  it("covers all 20 lesson block types in the library", () => {
     const coverage = getBlockTypeCoverage();
     for (const type of ALL_BLOCK_TYPES) {
       expect(coverage.get(type) ?? 0).toBeGreaterThan(0);
     }
   });
 
-  it("covers all 15 exercise types in the beginner library", () => {
+  it("covers all 16 exercise types in the library", () => {
     const coverage = getExerciseTypeCoverage();
     for (const type of ALL_EXERCISE_TYPES) {
       expect(coverage.get(type) ?? 0).toBeGreaterThan(0);
     }
   });
 
-  it("has 6 lessons across Pre-A1 and A1 with assessments", () => {
-    expect(lessons).toHaveLength(6);
+  it("has 20 lessons across the levels with assessments", () => {
+    expect(lessons).toHaveLength(20);
     expect(lessons.filter((l) => l.levelId === "pre-a1")).toHaveLength(4);
     expect(lessons.filter((l) => l.levelId === "a1")).toHaveLength(2);
+    expect(lessons.filter((l) => l.levelId === "grammar-core")).toHaveLength(14);
     for (const lesson of lessons) {
       expect(lesson.assessment).toBeDefined();
       expect(lesson.sections.length).toBeGreaterThan(0);

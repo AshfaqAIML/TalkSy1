@@ -21,6 +21,10 @@ import { HomeView } from "@/components/app/HomeView";
 import { LibraryView } from "@/components/app/LibraryView";
 import { AuthView } from "@/components/app/AuthView";
 import { DashboardView } from "@/components/app/DashboardView";
+import { GrammarHubView } from "@/components/app/grammar/GrammarHubView";
+import { TenseExplorerView } from "@/components/app/grammar/TenseExplorerView";
+import { ErrorClinicView } from "@/components/app/grammar/ErrorClinicView";
+import { SentenceLabView } from "@/components/app/lab/SentenceLabView";
 import { LessonPlayer } from "@/components/app/lesson/LessonPlayer";
 import { cn } from "@/lib/utils";
 
@@ -72,6 +76,24 @@ export default function Page() {
         )}
       >
         Learning path
+      </Link>
+      <Link
+        href="#/grammar"
+        className={cn(
+          "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-secondary",
+          ["grammar", "grammar-tenses", "grammar-clinic"].includes(route.name) && "bg-secondary",
+        )}
+      >
+        Grammar School
+      </Link>
+      <Link
+        href="#/lab"
+        className={cn(
+          "rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-secondary",
+          route.name === "lab" && "bg-secondary",
+        )}
+      >
+        Sentence Lab
       </Link>
       {user ? (
         <Link
@@ -167,6 +189,10 @@ export default function Page() {
       <main className="flex-1">
         {route.name === "home" ? <HomeView navigate={navigate} /> : null}
         {route.name === "library" ? <LibraryView onOpenLesson={openLesson} /> : null}
+        {route.name === "grammar" ? <GrammarHubView /> : null}
+        {route.name === "grammar-tenses" ? <TenseExplorerView /> : null}
+        {route.name === "grammar-clinic" ? <ErrorClinicView navigate={navigate} /> : null}
+        {route.name === "lab" ? <SentenceLabView /> : null}
         {route.name === "login" ? <AuthView mode="login" navigate={navigate} /> : null}
         {route.name === "register" ? <AuthView mode="register" navigate={navigate} /> : null}
         {route.name === "dashboard" ? (

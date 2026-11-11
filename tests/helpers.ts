@@ -20,6 +20,8 @@ export function buildCorrectAnswer(exercise: Exercise): unknown {
     case "listen-answer":
     case "dictation":
       return { text: exercise.acceptedAnswers[0] };
+    case "sentence-build":
+      return { tokens: exercise.acceptedSentences[0].split(" ") };
     case "match":
       return { pairs: exercise.pairs };
     case "drag-drop":

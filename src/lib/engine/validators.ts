@@ -20,6 +20,7 @@ import type {
   MultiSelectExercise,
   RearrangeExercise,
   ReadAnswerExercise,
+  SentenceBuildExercise,
   ShortAnswerExercise,
   SpeakResponseExercise,
   TranslateExercise,
@@ -241,6 +242,30 @@ function validateSpeakResponse(
   return textResult(containsAllKeywords(text, ex.mustSay));
 }
 
+function validateSentenceBuild(
+  ex: SentenceBuildExercise,
+  answer: unknown,
+): ValidationResult {
+  const tokens = Array.isArray((answer as { tokens?: unknown })?.tokens)
+    ? (answer as { tokens: unknown[] }).tokens.filter(
+        (t): t is string => typeof t === "string",
+      )
+    : null;
+  if (!tokens || tokens.length === 0) return INVALID;
+  const normalize = (s: string) =>
+    s
+      .split(/\s+/)
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean)
+      .join(" ");
+  const submitted = normalize(tokens.join(" "));
+  if (submitted.length === 0) return INVALID;
+  // Alternative valid answers: any accepted sequence counts.
+  return textResult(
+    ex.acceptedSentences.some((accepted) => normalize(accepted) === submitted),
+  );
+}
+
 /**
  * Grade a submitted answer for any exercise type.
  * Unknown/missing answer shapes return `{ invalid: true }` and are recorded
@@ -292,6 +317,8 @@ export function validateAnswer(
       return validateWriteResponse(exercise as WriteResponseExercise, answer);
     case "speak-response":
       return validateSpeakResponse(exercise as SpeakResponseExercise, answer);
+    case "sentence-build":
+      return validateSentenceBuild(exercise as SentenceBuildExercise, answer);
     default:
       return INVALID;
   }

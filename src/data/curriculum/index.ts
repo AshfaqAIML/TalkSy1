@@ -10,6 +10,15 @@ import { preA1Lessons } from "./pre-a1";
 import { a1Lessons } from "./a1";
 import { preA1Exercises } from "./pre-a1-exercises";
 import { a1Exercises } from "./a1-exercises";
+import { posLessons } from "@/data/grammar/lessons-pos";
+import { tenseLessons } from "@/data/grammar/lessons-tenses";
+import { labLessons } from "@/data/grammar/lessons-lab";
+import { posExercises } from "@/data/grammar/exercises-pos";
+import { tenseExercises } from "@/data/grammar/exercises-tenses";
+import { labExercisesA } from "@/data/grammar/exercises-lab-a";
+import { labExercisesB } from "@/data/grammar/exercises-lab-b";
+import { getPosModule } from "@/data/grammar/parts-of-speech";
+import { getTense } from "@/data/grammar/tenses";
 
 /**
  * Curriculum registry. Content is code: this module is the single source of
@@ -18,9 +27,22 @@ import { a1Exercises } from "./a1-exercises";
 
 export * from "./types";
 
-export const lessons: Lesson[] = [...preA1Lessons, ...a1Lessons];
+export const lessons: Lesson[] = [
+  ...preA1Lessons,
+  ...a1Lessons,
+  ...posLessons,
+  ...tenseLessons,
+  ...labLessons,
+];
 
-export const exercises: Exercise[] = [...preA1Exercises, ...a1Exercises];
+export const exercises: Exercise[] = [
+  ...preA1Exercises,
+  ...a1Exercises,
+  ...posExercises,
+  ...tenseExercises,
+  ...labExercisesA,
+  ...labExercisesB,
+];
 
 const lessonBySlug = new Map(lessons.map((l) => [l.slug, l]));
 const exerciseById = new Map(exercises.map((e) => [e.id, e]));
@@ -39,12 +61,14 @@ export function getExercisesByIds(ids: string[]): Exercise[] {
     .filter((e): e is Exercise => e !== undefined);
 }
 
-/** All exercise ids referenced by a lesson's practice blocks (in order). */
+/** All exercise ids referenced by a lesson's practice & challenge blocks. */
 export function getLessonExerciseIds(lesson: Lesson): string[] {
   const ids: string[] = [];
   for (const section of lesson.sections) {
     for (const block of section.blocks) {
-      if (block.type === "practice") ids.push(...block.exerciseIds);
+      if (block.type === "practice" || block.type === "challenge") {
+        ids.push(...block.exerciseIds);
+      }
     }
   }
   return ids;
@@ -84,6 +108,39 @@ export const levels: Level[] = [
         title: "Everyday English",
         description: "The verb 'to be' and café conversations.",
         lessonSlugs: ["a1-1-1", "a1-1-2"],
+      },
+    ],
+  },
+  {
+    id: "grammar-core",
+    name: "Grammar Core · School & Lab",
+    tagline: "Grammar School and the Sentence Construction Laboratory — understand, compare, build.",
+    units: [
+      {
+        number: 1,
+        title: "Grammar School · Parts of Speech",
+        description: "All eight parts of speech with categories, mistakes and activities.",
+        lessonSlugs: ["grammar-pos-1", "grammar-pos-2", "grammar-pos-3", "grammar-pos-4"],
+      },
+      {
+        number: 2,
+        title: "Grammar School · Tenses",
+        description: "All 12 tenses compared side by side — meaning first.",
+        lessonSlugs: ["grammar-tenses-present", "grammar-tenses-past", "grammar-tenses-future"],
+      },
+      {
+        number: 3,
+        title: "Sentence Construction Laboratory",
+        description: "Seven stages from word recognition to transformation.",
+        lessonSlugs: [
+          "lab-1-word-recognition",
+          "lab-2-basic-structure",
+          "lab-3-sentence-types",
+          "lab-4-polarity",
+          "lab-5-expansion",
+          "lab-6-combination",
+          "lab-7-transformation",
+        ],
       },
     ],
   },
@@ -142,10 +199,36 @@ export function validateCurriculum(): CurriculumIssue[] {
       if (section.blocks.length === 0) add("empty-section", `Section "${section.id}" of lesson "${lesson.slug}" has no blocks.`);
     }
 
-    // Practice references.
+    // Practice & challenge references.
     for (const id of getLessonExerciseIds(lesson)) {
       if (!exerciseById.has(id)) {
         add("missing-exercise", `Lesson "${lesson.slug}" references unknown exercise "${id}".`);
+      }
+    }
+
+    // Grammar block references.
+    for (const section of lesson.sections) {
+      for (const block of section.blocks) {
+        if (block.type === "pos-module") {
+          for (const moduleId of block.moduleIds) {
+            if (!getPosModule(moduleId)) {
+              add("bad-grammar-block", `Lesson "${lesson.slug}" references unknown part-of-speech module "${moduleId}".`);
+            }
+          }
+        }
+        if (block.type === "tense-comparison") {
+          if (block.tenseIds.length !== 2) {
+            add("bad-grammar-block", `Tense comparison in "${lesson.slug}" must compare exactly two tenses.`);
+          }
+          for (const tenseId of block.tenseIds) {
+            if (!getTense(tenseId)) {
+              add("bad-grammar-block", `Lesson "${lesson.slug}" references unknown tense "${tenseId}".`);
+            }
+          }
+        }
+        if (block.type === "challenge" && block.timed && (block.seconds ?? 0) < 30) {
+          add("bad-challenge", `Timed challenge in "${lesson.slug}" needs at least 30 seconds.`);
+        }
       }
     }
 

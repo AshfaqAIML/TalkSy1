@@ -39,6 +39,8 @@ import {
   SpeakResponseInput,
   WriteResponseInput,
 } from "./inputs/open-inputs";
+import { SentenceBuildInput } from "./inputs/SentenceBuildInput";
+import { SentenceAnatomy } from "@/components/app/grammar/SentenceAnatomy";
 
 const DIFFICULTY_STYLE: Record<string, string> = {
   easy: "bg-primary/10 text-primary border-primary/30",
@@ -54,6 +56,7 @@ const TYPE_LABEL: Record<string, string> = {
   match: "Match the pairs",
   "drag-drop": "Drag and drop",
   rearrange: "Rearrange words",
+  "sentence-build": "Sentence building",
   "complete-sentence": "Complete the sentence",
   "correct-mistake": "Correct the mistake",
   translate: "Translation",
@@ -73,6 +76,8 @@ export interface ExerciseRunnerProps {
   /** practice: full feedback loop. assessment: collect answers silently. */
   mode?: "practice" | "assessment";
   onAnswerChange?: (answer: unknown) => void;
+  /** Called after each graded submission (used by ChallengeRunner). */
+  onResult?: (result: AttemptResult) => void;
 }
 
 /**
@@ -88,6 +93,7 @@ export function ExerciseRunner({
   total,
   mode = "practice",
   onAnswerChange,
+  onResult,
 }: ExerciseRunnerProps) {
   const user = useAppStore((s) => s.user);
   const [answer, setAnswer] = useState<unknown>(null);
@@ -166,6 +172,7 @@ export function ExerciseRunner({
     }
     setResult(response.data);
     setAttemptNumber((n) => n + 1);
+    onResult?.(response.data);
   };
 
   const retry = () => {
@@ -310,6 +317,8 @@ function renderInput(
       return <DragDropInput {...props} exercise={exercise} />;
     case "rearrange":
       return <RearrangeInput {...props} exercise={exercise} />;
+    case "sentence-build":
+      return <SentenceBuildInput {...props} exercise={exercise} />;
     case "complete-sentence":
       return <CompleteSentenceInput {...props} exercise={exercise} />;
     case "correct-mistake":
@@ -394,6 +403,16 @@ function FeedbackPanel({
           </p>
         ) : null}
       </div>
+
+      {/* Sentence-build: inspect the structure of the canonical answer */}
+      {result.structure ? (
+        <div className="rounded-xl border border-border/70 bg-background p-3">
+          <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            🔬 Inspect the sentence structure
+          </p>
+          <SentenceAnatomy sentence={result.structure} compact showLegend />
+        </div>
+      ) : null}
 
       {!correct && attemptNumber >= 1 ? (
         <p className="text-xs text-muted-foreground">

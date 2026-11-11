@@ -22,7 +22,7 @@ export type Skill =
   | "reading"
   | "writing";
 
-export type LevelId = "pre-a1" | "a1" | "a2";
+export type LevelId = "pre-a1" | "a1" | "grammar-core" | "a2";
 
 /** A parallel translation pair used across blocks and feedback. */
 export interface TranslationPair {
@@ -31,7 +31,40 @@ export interface TranslationPair {
 }
 
 // ---------------------------------------------------------------------------
-// Lesson blocks (16 structured block types)
+// Grammatical annotation (shared by Grammar School blocks and the Lab)
+// ---------------------------------------------------------------------------
+
+export type GrammaticalRole =
+  | "subject"
+  | "verb"
+  | "object"
+  | "complement"
+  | "modifier"
+  | "auxiliary"
+  | "determiner"
+  | "preposition"
+  | "conjunction"
+  | "negation"
+  | "question-word"
+  | "punctuation";
+
+/** One word/token of a sentence together with its grammatical role. */
+export interface AnnotatedToken {
+  text: string;
+  role: GrammaticalRole;
+  /** Short explanation of this token's job in this particular sentence. */
+  note?: string;
+}
+
+/** A sentence plus its structural annotation (pattern + per-token roles). */
+export interface SentenceStructure {
+  /** Pattern label, e.g. "S + V + O". */
+  pattern: string;
+  tokens: AnnotatedToken[];
+}
+
+// ---------------------------------------------------------------------------
+// Lesson blocks (20 structured block types)
 // ---------------------------------------------------------------------------
 
 export interface TextBlock {
@@ -176,6 +209,40 @@ export interface HomeworkBlock {
   tasks: string[];
 }
 
+/** Grammar School: renders one or more complete part-of-speech modules. */
+export interface PosModuleBlock {
+  type: "pos-module";
+  moduleIds: string[]; // references src/data/grammar/parts-of-speech.ts
+}
+
+/** Grammar School: side-by-side tense comparison for two tenses. */
+export interface TenseComparisonBlock {
+  type: "tense-comparison";
+  title?: string;
+  /** Exactly two tense ids to compare (see src/data/grammar/tenses.ts). */
+  tenseIds: [string, string];
+  note?: string;
+}
+
+/** Grammar School: colour-coded sentence structure diagram. */
+export interface SentenceAnatomyBlock {
+  type: "sentence-anatomy";
+  title?: string;
+  sentence: SentenceStructure;
+  showLabels?: boolean;
+}
+
+/** Sentence Lab: a timed or untimed accuracy challenge round. */
+export interface ChallengeBlock {
+  type: "challenge";
+  title?: string;
+  description?: string;
+  exerciseIds: string[];
+  /** Timed rounds show a countdown; accuracy still decides the score. */
+  timed: boolean;
+  seconds?: number;
+}
+
 export type LessonBlock =
   | TextBlock
   | HeadingBlock
@@ -192,12 +259,16 @@ export type LessonBlock =
   | NoteBlock
   | WarningBlock
   | PracticeBlock
-  | HomeworkBlock;
+  | HomeworkBlock
+  | PosModuleBlock
+  | TenseComparisonBlock
+  | SentenceAnatomyBlock
+  | ChallengeBlock;
 
 export type BlockType = LessonBlock["type"];
 
 // ---------------------------------------------------------------------------
-// Exercises (15 reusable types)
+// Exercises (16 reusable types)
 // ---------------------------------------------------------------------------
 
 export type ExerciseType =
@@ -207,6 +278,7 @@ export type ExerciseType =
   | "match"
   | "drag-drop"
   | "rearrange"
+  | "sentence-build"
   | "complete-sentence"
   | "correct-mistake"
   | "translate"
@@ -357,6 +429,17 @@ export interface SpeakResponseExercise extends ExerciseCommon {
   mustSay: string[];
 }
 
+/** Sentence Lab: build a sentence from word tiles (with distractors). */
+export interface SentenceBuildExercise extends ExerciseCommon {
+  type: "sentence-build";
+  /** Word tiles: the tokens of every accepted sentence plus distractors. */
+  tiles: string[];
+  /** Every accepted token sequence (space-joined) — alternatives allowed. */
+  acceptedSentences: string[];
+  /** Structure annotation of the canonical answer for post-check inspection. */
+  structure?: SentenceStructure;
+}
+
 export type Exercise =
   | McqExercise
   | MultiSelectExercise
@@ -372,7 +455,8 @@ export type Exercise =
   | DictationExercise
   | ReadAnswerExercise
   | WriteResponseExercise
-  | SpeakResponseExercise;
+  | SpeakResponseExercise
+  | SentenceBuildExercise;
 
 /** Omit that distributes over unions. */
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
@@ -390,7 +474,9 @@ type GradingKeys =
   | "mustInclude"
   | "mustSay"
   | "correctTokens"
-  | "correctSentence";
+  | "correctSentence"
+  | "acceptedSentences"
+  | "structure";
 
 /** Drag-drop items without the answer (categoryId). */
 export type SafeDragDropExercise = Omit<DragDropExercise, GradingKeys | "items"> & {
@@ -408,14 +494,23 @@ export type SafeWriteResponseExercise = Omit<WriteResponseExercise, GradingKeys>
 /** Speak-response without the grading keywords. */
 export type SafeSpeakResponseExercise = Omit<SpeakResponseExercise, GradingKeys>;
 
+/** Sentence-build: pre-scrambled tiles, no accepted sentences, no structure. */
+export type SafeSentenceBuildExercise = Omit<SentenceBuildExercise, GradingKeys> & {
+  tiles: string[];
+};
+
 /** Exercise payload sent to the client: all grading fields stripped. */
 export type SafeExercise =
   | DistributiveOmit<
-      Exclude<Exercise, DragDropExercise | RearrangeExercise>,
+      Exclude<
+        Exercise,
+        DragDropExercise | RearrangeExercise | SentenceBuildExercise
+      >,
       GradingKeys
     >
   | SafeDragDropExercise
-  | SafeRearrangeExercise;
+  | SafeRearrangeExercise
+  | SafeSentenceBuildExercise;
 
 /** The client-safe variant of a given exercise type. */
 export type SafeOf<T extends ExerciseType> = Extract<SafeExercise, { type: T }>;
@@ -429,7 +524,7 @@ export type ExerciseAnswer =
   | { type: "multi-select"; optionIds: string[] }
   | { type: "match"; pairs: { leftId: string; rightId: string }[] }
   | { type: "drag-drop"; placements: { itemId: string; categoryId: string }[] }
-  | { type: "rearrange"; tokens: string[] }
+  | { type: "rearrange" | "sentence-build"; tokens: string[] }
   | {
       type:
         | "fill-blank"

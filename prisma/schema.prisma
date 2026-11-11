@@ -20,6 +20,7 @@ model User {
   exerciseAttempts  ExerciseAttempt[]
   notes             LessonNote[]
   assessmentResults AssessmentResult[]
+  clinicSubmissions GrammarClinicSubmission[]
   stats             UserStats?
 }
 
@@ -87,6 +88,21 @@ model LessonNote {
   updatedAt  DateTime @updatedAt
 
   @@unique([userId, lessonSlug, sectionId])
+}
+
+// Grammar Error Clinic: every submitted sentence with its corrections and
+// detected error categories (used to recommend additional lessons).
+model GrammarClinicSubmission {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sentence   String
+  corrected  String   @default("")
+  issues     String   @default("[]") // JSON GrammarIssue[]
+  categories String   @default("[]") // JSON error categories
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
 }
 
 // End-of-lesson assessment runs. Created "pending" on start (with the
